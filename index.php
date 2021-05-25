@@ -1,6 +1,62 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 
+
+//Randomise name for file
+class DFileHelper
+{public static function getRandomFileName($path, $extension=''){
+        $extension = $extension ? '.' . $extension : '';
+        $path = $path ? $path . '/' : '';
+        do {
+            $name = md5(microtime() . rand(0, 9999));
+            $file = $path . $name . $extension;
+        } while (file_exists($file));
+        return $name;}}
+
+//Order
+if(isset($_POST['summ'] ,$_POST['name'] ,$_POST['tovar'] ,$_POST['secName'], $_POST['lastName'], $_POST['email'], $_POST['Country'], $_POST['City'], $_POST['Region'], $_POST['Apartmets'], $_POST['indexCity'] , $_POST['Order'])){
+    if(isset($_FILES)){
+        $names = '';
+        $path = './upload'; 
+        foreach($_FILES as $file){
+            $extension = strtolower(substr(strrchr($file['name'], '.'), 1));
+            $filename = DFileHelper::getRandomFileName($path, $extension);
+            $target = $path . '/' . $filename . '.' . $extension;
+            move_uploaded_file($file['tmp_name'], $target);
+            $names = $names.$target.' ';
+        }}
+    $addictionalNote = $_POST['addictionalNote'];
+    $FIO = $_POST['name'].' '.$_POST['secName'].' '.$_POST['lastName'];
+    $Adress =  $_POST['indexCity'].', '.$_POST['Country'].', '.$_POST['City'] .', '.$_POST['Region'] .', '.$_POST['Apartmets'];
+    $email = $_POST['email'];
+    $tovar = $_POST['tovar'];
+    $summ = $_POST['summ'];
+    $date = date('Y/m/d H:i:s');
+    require_once 'login.php'; 
+    $conn = mysqli_connect($hn, $un, $pw, $db); 
+    if (!$conn) die('Невозможно запустить mysql'); 
+    $query = "INSERT INTO orders (email,FIO,Adress,orderUser,summ,imgPortret,addictionalNote,date) VALUES ('$email','$FIO','$Adress','$tovar','$summ','$names','$addictionalNote','$date')";
+    $result = mysqli_query($conn, $query) or die('Resourse is undefined');  
+
+}
+
+//History orders
+if(isset($_POST['HistoryOrders'],$_POST['email'])){
+    $email = $_POST['email'];
+    require_once 'login.php';  
+    $conn = mysqli_connect($hn, $un, $pw, $db); 
+    if (!$conn) die('Невозможно запустить mysql');
+    $query = "SELECT orderUser, date FROM orders WHERE `email` = '".$email."'";
+    $result = mysqli_query($conn, $query) or die('Ресурс не найден');
+    $rows=mysqli_num_rows($result);
+    for ($j=0;$j<$rows;++$j)
+    {$row=mysqli_fetch_row($result);
+        echo($row[0].','.$row[1].',');
+    } 
+}
+
+
+
 //Registration
 if(isset($_POST['email'], $_POST['password'],$_POST['register'])){
     $email = $_POST['email'];
@@ -19,7 +75,7 @@ if(isset($_POST['email'], $_POST['password'],$_POST['register'])){
         die;
     }}
     if (!$conn) die('Невозможно запустить mysql'); 
-        $query  = "INSERT INTO info (email,password) VALUES('$email','$password')";  
+        $query  = "INSERT `orders` (email,password) VALUES('$email','$password')";  
         $result = mysqli_query($conn, $query) or die('Ресурс не найден');
         echo ('Conf');
 }
@@ -44,25 +100,7 @@ if(isset($_POST['email'], $_POST['password'],$_POST['auth'])){
     echo ('err');
 }
 
-//????????????????????????????????????????????????????????
-if(isset($_POST['name'] ,$_POST['secName'], $_POST['lastName'], $_POST['Country'], $_POST['City'], $_POST['Region'], $_POST['Apartmets'], $_POST['indexCity']))
-{
-$name = $_POST['name'];
-$secName = $_POST['secName'];
-$lastName = $_POST['lastName'];
-$Country = $_POST['Country'];
-$City = $_POST['City'];
-$Region = $_POST['Region'];
-$Apartmets = $_POST['Apartmets'];
-$email = $_POST['email'];
-$indexCity = $_POST['indexCity'];
 
-require_once 'login.php';  
-$conn = mysqli_connect($hn, $un, $pw, $db); 
-if (!$conn) die('Невозможно запустить mysql'); 
-$query = "INSERT INTO info (name,secondName,lastName,email,postСode,country,city,region,apartments) VALUES ('$name','$secName','$lastName','$email','$indexCity','$Country','$City','$Region','$Apartmets')";
-$result = mysqli_query($conn, $query) or die('Resourse is undefined');
-}
 
 //Personal area
 if(isset($_POST['email'], $_POST['StrLog'])){
@@ -111,52 +149,10 @@ if (isset($_POST['Region'],$_POST['Country'],$_POST['City'],$_POST['email'],$_PO
     echo('loadAcceptAdress');
 }
 
-// if(isset($_POST['name'] ,$_POST['secName'],$_POST['addictionalNote'] , $_POST['lastName'], $_POST['Country'], $_POST['City'], $_POST['Region'], $_POST['Apartmets'], $_POST['Format'] , $_POST['indexCity'] , $_POST['email']))
-// {
-// $addictionalNote = $_POST['addictionalNote'];
-// $name = $_POST['name'];
-// $secName = $_POST['secName'];
-// $lastName = $_POST['lastName'];
-// $Country = $_POST['Country'];
-// $City = $_POST['City'];
-// $Region = $_POST['Region'];
-// $Apartmets = $_POST['Apartmets'];
-// $email = $_POST['email'];
-// $Format = $_POST['Format'];
-// $indexCity = $_POST['indexCity'];
-// $file = $_FILES['file']['name'];
-// require_once 'login.php';  
-// $conn = mysqli_connect($hn, $un, $pw, $db); 
-// if (!$conn) die('Невозможно запустить mysql'); 
-// $query2 = "SELECT origImg,secImg FROM images";  
-// $result2 = mysqli_query($conn, $query2) or die('Ресурс не найден11115');
-// $rows2=mysqli_num_rows($result2); 
-// for ($j=0;$j<$rows2;++$j)
-// {$row=mysqli_fetch_row($result2);
-// if ($row[0] === $file){
-// 	$file = $row[1]; 
-// } 
-// }
-// $query = "INSERT INTO info (name,secondName,lastName,format,email,postСode,country,city,region,apartments,addictionalNote,image) VALUES ('$name','$secName','$lastName','$Format','$email','$indexCity','$Country','$City','$Region','$Apartmets','$addictionalNote','$file')";
-// $result = mysqli_query($conn, $query) or die('Resourse is undefined');
-// }
-
-//Randomise name for file
-class DFileHelper
-{public static function getRandomFileName($path, $extension=''){
-        $extension = $extension ? '.' . $extension : '';
-        $path = $path ? $path . '/' : '';
-        do {
-            $name = md5(microtime() . rand(0, 9999));
-            $file = $path . $name . $extension;
-        } while (file_exists($file));
-        return $name;}}
 
 
 //Load photo
 if(isset($_POST['loadedimg']) === true){
-$path = './upload'; 
-$extension = strtolower(substr(strrchr($_FILES['file']['name'], '.'), 1));
 $name  = $_FILES['file']['name'];
 $type = $_FILES['file']['type'];
 $size = $_FILES['file']['size'];
@@ -164,14 +160,7 @@ $size = $_FILES['file']['size'];
         if ($size > 100000000){
             die("FileSoBig");
         }else{
-            $filename = DFileHelper::getRandomFileName($path, $extension);
-            $target = $path . '/' . $filename . '.' . $extension;
-            move_uploaded_file($_FILES['file']['tmp_name'], $target);
-            require_once 'login.php'; 
-            $conn = mysqli_connect($hn, $un, $pw, $db); 
-            if (!$conn) die('Невозможно запустить mysql'); 
-            $query = "INSERT INTO images (origImg,secImg) VALUES ('$name','$target')";
-            $result = mysqli_query($conn, $query) or die('Resourse is undefined');
+            
             echo ('LoadAccept');
         }
     }else{
@@ -179,6 +168,5 @@ $size = $_FILES['file']['size'];
     }
 
 }
-    
 
 ?>
